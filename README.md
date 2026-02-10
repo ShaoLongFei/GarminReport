@@ -1,51 +1,32 @@
+<a id="english"></a>
+
 # GarminReport
 
-中文 | English
+Language: **English** | [中文](#chinese)
 
-GarminReport 是一个面向个人年度复盘的 Garmin 数据可视化项目。  
-GarminReport is a personal yearly-review dashboard for Garmin data.
+GarminReport is a stylish, privacy-first annual dashboard for Garmin data.
+It converts your activity and health records into a polished yearly report with:
 
-它可以把你的活动、健康、睡眠、强度训练等数据生成一个风格化年度报告页面，并支持一键打印/PDF 导出。  
-It turns your activities, health, sleep, and intensity metrics into a polished yearly report page with one-click print/PDF export.
+- multi-section storytelling (Overview, Sports, Health, YoY)
+- rich charts and 3D/2D contribution-style visualizations
+- one-click print/PDF export
+- responsive layout for desktop and mobile
 
-## Why This Project | 项目亮点
+## Screenshot
 
-- 多章节年度报告：概览总览、运动分析、健康洞察、年度对比  
-  Multi-section report: Overview, Sports Analysis, Health Insights, Year-over-Year Comparison.
-- 深色科技风 UI，支持桌面端与移动端适配  
-  Modern dark UI with desktop and mobile responsiveness.
-- 强化图表体系：趋势图、类型分布、Top 活动、3D/2D 热力视图  
-  Rich charts: trends, type distribution, top activities, and 3D/2D heatmap views.
-- 隐私优先：原始 Garmin 数据默认不入库  
-  Privacy-first: raw Garmin exports are excluded from version control by default.
+Sports Analysis (Desktop):
 
-## Demo Screenshots | 示例截图
+![Sports Analysis Desktop](output/screenshots/report-2025-sports-desktop.png)
 
-### Overview / 概览总览
-![Overview Desktop](output/screenshots/report-2025-overview-desktop.png)
-![Overview Mobile](output/screenshots/report-2025-overview-mobile.png)
+## Quick Start
 
-### Sports Analysis / 运动分析
-![Sports Desktop](output/screenshots/report-2025-sports-desktop.png)
-![Sports Mobile](output/screenshots/report-2025-sports-mobile.png)
-
-### Health Insights / 健康洞察
-![Health Desktop](output/screenshots/report-2025-health-desktop.png)
-![Health Mobile](output/screenshots/report-2025-health-mobile.png)
-
-### Year-over-Year / 年度对比
-![Compare Desktop](output/screenshots/report-2025-compare-desktop.png)
-![Compare Mobile](output/screenshots/report-2025-compare-mobile.png)
-
-## Quick Start | 快速开始
-
-### 1) Configure environment / 配置环境
+1. Configure env:
 
 ```bash
 cp .env.example .env
 ```
 
-Fill in your Garmin credentials in `.env`:
+2. Fill credentials in `.env`:
 
 ```env
 GARMIN_EMAIL=
@@ -53,36 +34,33 @@ GARMIN_PASSWORD=
 GARMIN_CN=false
 ```
 
-### 2) Pull Garmin data / 拉取 Garmin 数据
+3. Pull Garmin data (at least two consecutive years for YoY comparison):
 
 ```bash
-python fetch_garmin_data.py --years 2025
+python fetch_garmin_data.py --years 2024,2025
 ```
 
-### 3) Build yearly analysis / 生成年度分析数据
+If only one year is pulled, previous-year comparison fields will be missing.
+
+4. Build yearly analysis:
 
 ```bash
 python analyze_report_data.py --year 2025
 ```
 
-### 4) Generate report / 生成报告页面
+5. Generate report page:
 
 ```bash
 python generate_report.py --year 2025
 ```
 
-## Privacy & Safety | 隐私与安全
+## Privacy & Safety
 
 - `garmin_report_*/` is ignored by default.
-- Secrets (`.env`, `*.pem`, `*.key`, `*.p12`) are ignored by default.
-- `output/` is ignored except `output/screenshots/*.png` for showcase images.
-- Before commit, run:
+- Secrets (`.env`, `*.pem`, `*.key`, `*.p12`) are ignored.
+- `output/` is ignored except `output/screenshots/*.png` (for README demos).
 
-```bash
-scripts/privacy_check_staged.sh
-```
-
-## Repo Structure | 目录结构
+## Project Structure
 
 ```text
 fetch_garmin_data.py        # Pull raw Garmin data
@@ -93,7 +71,7 @@ tests/                      # Unit tests
 output/screenshots/         # Demo screenshots tracked for README
 ```
 
-## Testing | 测试
+## Testing
 
 ```bash
 python -m pytest tests -q
@@ -101,5 +79,58 @@ python -m pytest tests -q
 
 ---
 
-If you are building your own annual review page, this repo gives you both a data pipeline and a polished frontend baseline.  
-如果你想做自己的年度运动复盘，这个仓库提供了完整的数据处理链路和可持续迭代的前端模板。
+<a id="chinese"></a>
+
+# GarminReport（中文）
+
+语言： [English](#english) | **中文**
+
+GarminReport 是一个兼顾美观与隐私安全的 Garmin 年度报告项目。  
+它可以把活动与健康数据整理成结构化年度页面，支持：
+
+- 概览总览、运动分析、健康洞察、年度对比
+- 多种图表与 3D/2D 热力可视化
+- 一键打印 / 导出 PDF
+- 桌面端与移动端自适应
+
+## 快速开始
+
+1. 复制环境变量模板：
+
+```bash
+cp .env.example .env
+```
+
+2. 在 `.env` 中填写账号：
+
+```env
+GARMIN_EMAIL=
+GARMIN_PASSWORD=
+GARMIN_CN=false
+```
+
+3. 拉取数据（至少连续两年，才能做同比）：
+
+```bash
+python fetch_garmin_data.py --years 2024,2025
+```
+
+如果只拉取一年，分析时上一年对比字段会缺失。
+
+4. 生成分析数据：
+
+```bash
+python analyze_report_data.py --year 2025
+```
+
+5. 生成报告：
+
+```bash
+python generate_report.py --year 2025
+```
+
+## 隐私说明
+
+- 默认忽略 `garmin_report_*/` 原始数据目录。
+- 默认忽略密钥与环境文件（如 `.env`、`*.pem` 等）。
+- 默认忽略 `output/`，仅保留 `output/screenshots/*.png` 作为 README 示例图。
