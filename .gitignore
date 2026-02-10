@@ -1,29 +1,34 @@
-# macOS
+# OS / Filesystem
 .DS_Store
 
-# Python cache and tooling
+# Python bytecode and caches
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.ipynb_checkpoints/
+
+# Test / coverage artifacts
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
 
 # Virtual environments
 .venv/
 venv/
 
-# IDE/editor
+# IDE / editor
 .idea/
 .vscode/
 
-# Project outputs and private Garmin data
+# Project private data and generated assets
 garmin_report_*/
 output/
 *.log
 
-# Secrets and certs
+# Secrets and certificates
 .env
 .env.*
 !.env.example
