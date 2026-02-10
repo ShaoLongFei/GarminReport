@@ -26,7 +26,13 @@ Sports Analysis (Desktop):
 cp .env.example .env
 ```
 
-2. Fill credentials in `.env`:
+2. Install dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+3. Fill credentials in `.env`:
 
 ```env
 GARMIN_EMAIL=
@@ -34,7 +40,7 @@ GARMIN_PASSWORD=
 GARMIN_CN=false
 ```
 
-3. Pull Garmin data (at least two consecutive years for YoY comparison):
+4. Pull Garmin data (at least two consecutive years for YoY comparison):
 
 ```bash
 python fetch_garmin_data.py --years 2024,2025
@@ -42,13 +48,13 @@ python fetch_garmin_data.py --years 2024,2025
 
 If only one year is pulled, previous-year comparison fields will be missing.
 
-4. Build yearly analysis:
+5. Build yearly analysis:
 
 ```bash
 python analyze_report_data.py --year 2025
 ```
 
-5. Generate report page:
+6. Generate report page:
 
 ```bash
 python generate_report.py --year 2025
@@ -63,6 +69,8 @@ python generate_report.py --year 2025
 ## Project Structure
 
 ```text
+requirements.txt            # Runtime dependencies
+requirements-dev.txt        # Dev/test dependencies
 fetch_garmin_data.py        # Pull raw Garmin data
 analyze_report_data.py      # Build yearly aggregated analysis
 generate_report.py          # Render final annual report HTML
@@ -74,6 +82,7 @@ output/screenshots/         # Demo screenshots tracked for README
 ## Testing
 
 ```bash
+python -m pip install -r requirements-dev.txt
 python -m pytest tests -q
 ```
 
@@ -101,7 +110,13 @@ GarminReport 是一个兼顾美观与隐私安全的 Garmin 年度报告项目�
 cp .env.example .env
 ```
 
-2. 在 `.env` 中填写账号：
+2. 安装依赖：
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+3. 在 `.env` 中填写账号：
 
 ```env
 GARMIN_EMAIL=
@@ -109,7 +124,7 @@ GARMIN_PASSWORD=
 GARMIN_CN=false
 ```
 
-3. 拉取数据（至少连续两年，才能做同比）：
+4. 拉取数据（至少连续两年，才能做同比）：
 
 ```bash
 python fetch_garmin_data.py --years 2024,2025
@@ -117,13 +132,13 @@ python fetch_garmin_data.py --years 2024,2025
 
 如果只拉取一年，分析时上一年对比字段会缺失。
 
-4. 生成分析数据：
+5. 生成分析数据：
 
 ```bash
 python analyze_report_data.py --year 2025
 ```
 
-5. 生成报告：
+6. 生成报告：
 
 ```bash
 python generate_report.py --year 2025
