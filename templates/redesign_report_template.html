@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Garmin 年度报告 __YEAR__</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2/dist/echarts-gl.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/obelisk.js@1.2.1/build/obelisk.min.js"></script>
+  <style>
+__REPORT_CSS__
+  </style>
+</head>
+<body>
+  <div
+    class="report-shell"
+    x-data="{
+      tab: 'overview',
+      renderedTabs: { overview: true, sports: false, health: false, compare: false },
+      setTab(nextTab) {
+        this.tab = nextTab;
+        this.renderedTabs[nextTab] = true;
+        const u = new URL(window.location.href);
+        u.searchParams.set('tab', nextTab);
+        history.replaceState(null, '', u.toString());
+        window.dispatchEvent(new Event('garmin-tab-change'));
+      },
+      init() {
+        const params = new URLSearchParams(window.location.search);
+        const requestedTab = params.get('tab');
+        const allowedTabs = ['overview', 'sports', 'health', 'compare'];
+        if (allowedTabs.includes(requestedTab)) {
+          this.tab = requestedTab;
+          this.renderedTabs[requestedTab] = true;
+        }
+        this.$nextTick(() => window.dispatchEvent(new Event('garmin-tab-change')));
+      }
+    }"
+    x-init="init()"
+  >
+    <header class="hero">
+      <div class="hero-top">
+        <h1 class="hero-title">Garmin __YEAR__ 年度报告</h1>
+        <button id="btn-export-pdf" class="share-btn" type="button">分享 / 打印 PDF</button>
+      </div>
+      <p class="hero-subtitle">深色科技年度复盘 | 数据来源 analyze_report_data.json | 生成时间 __GENERATED_AT__</p>
+      <div class="hero-strips">
+        <div class="hero-chip"><div class="label">活动总数</div><div class="value" id="hero-total-activities">-</div></div>
+        <div class="hero-chip"><div class="label">年度总距离</div><div class="value" id="hero-total-distance">-</div></div>
+        <div class="hero-chip"><div class="label">年度总时长</div><div class="value" id="hero-total-duration">-</div></div>
+      </div>
+    </header>
+
+    <div class="tab-header">
+      <button class="tab-button" :class="{ 'active': tab === 'overview' }" @click="setTab('overview')">概览总览</button>
+      <button class="tab-button" :class="{ 'active': tab === 'sports' }" @click="setTab('sports')">运动分析</button>
+      <button class="tab-button" :class="{ 'active': tab === 'health' }" @click="setTab('health')">健康洞察</button>
+      <button class="tab-button" :class="{ 'active': tab === 'compare' }" @click="setTab('compare')">年度对比</button>
+    </div>
+
+    <main class="content">
+      <section x-show="tab === 'overview'" x-cloak>
+        <div class="section-grid">
+          <div class="panel" style="grid-column: span 12;">
+            <h2 class="panel-title">核心指标</h2>
+            <div id="overview-kpis" class="metrics-grid"></div>
+          </div>
+          <div class="panel" style="grid-column: span 8;">
+            <h2 class="panel-title">月度里程与活动次数</h2>
+            <div id="chart-overview-monthly" class="chart"></div>
+          </div>
+          <div class="panel" style="grid-column: span 4;">
+            <h2 class="panel-title">运动类型分布</h2>
+            <div id="chart-sport-type-pie" class="chart"></div>
+          </div>
+          <div class="panel" style="grid-column: span 4;">
+            <h2 class="panel-title">按运动类型划分的卡路里消耗分布</h2>
+            <div id="chart-overview-type-calories" class="chart compact"></div>
+          </div>
+          <div class="panel" style="grid-column: span 4;">
+            <h2 class="panel-title">按运动类型划分的运动时长分布</h2>
+            <div id="chart-overview-type-duration" class="chart compact"></div>
+          </div>
+          <div class="panel" style="grid-column: span 4;">
+            <h2 class="panel-title">按运动类型划分的强度活动时间分布</h2>
+            <div id="chart-overview-type-intensity" class="chart compact"></div>
+          </div>
+        </div>
+      </section>
+
+      <section x-show="tab === 'sports'" x-cloak>
+        <div class="section-grid">
+          <div class="panel" style="grid-column: span 12;">
+            <h2 class="panel-title">跑步与游泳关键数据</h2>
+            <div id="sports-kpis" class="metrics-grid"></div>
+          </div>
+          <div class="panel" style="grid-column: span 8;">
+            <h2 class="panel-title">运动类型多维分析（次数 / 时长 / 距离）</h2>
+            <div id="chart-sport-matrix" class="chart tall"></div>
+          </div>
+          <div class="panel" style="grid-column: span 4;">
+            <h2 class="panel-title">运动类型卡路里占比</h2>
+            <div id="chart-sport-calories" class="chart tall"></div>
+          </div>
+          <div class="panel" style="grid-column: span 6;">
+            <h2 class="panel-title">Top 5 跑步</h2>
+            <div id="table-running" class="table-wrap"></div>
+          </div>
+          <div class="panel" style="grid-column: span 6;">
+            <h2 class="panel-title">Top 5 游泳</h2>
+            <div id="table-swimming" class="table-wrap"></div>
+          </div>
+          <div class="panel" style="grid-column: span 12;">
+            <h2 class="panel-title">每周强度活动目标与达成（目标 200 分钟）</h2>
+            <div id="chart-sports-weekly-intensity-goal" class="chart"></div>
+          </div>
+          <div class="panel" style="grid-column: span 12;">
+            <div class="panel-title-row">
+              <h2 class="panel-title">365 天每日卡路里消耗（3D 热力柱）</h2>
+              <div class="iso-view-switch" data-iso-toggle-group>
+                <button type="button" class="iso-view-btn" data-iso-mode="2d">2D</button>
+                <button type="button" class="iso-view-btn" data-iso-mode="3d">3D</button>
+                <button type="button" class="iso-view-btn" data-iso-mode="both">Both</button>
+              </div>
+            </div>
+            <div id="chart-sports-daily-calories-3d" class="chart heat3d" data-iso-view-mode="both"></div>
+          </div>
+          <div class="panel" style="grid-column: span 12;">
+            <div class="panel-title-row">
+              <h2 class="panel-title">365 天每日运动时长（3D 热力柱）</h2>
+              <div class="iso-view-switch" data-iso-toggle-group>
+                <button type="button" class="iso-view-btn" data-iso-mode="2d">2D</button>
+                <button type="button" class="iso-view-btn" data-iso-mode="3d">3D</button>
+                <button type="button" class="iso-view-btn" data-iso-mode="both">Both</button>
+              </div>
+            </div>
+            <div id="chart-sports-daily-duration-3d" class="chart heat3d" data-iso-view-mode="both"></div>
+          </div>
+        </div>
+      </section>
+
+      <section x-show="tab === 'health'" x-cloak>
+        <div class="section-grid">
+          <div class="panel" style="grid-column: span 12;">
+            <h2 class="panel-title">健康概览</h2>
+            <div id="health-kpis" class="metrics-grid"></div>
+          </div>
+          <div class="panel" style="grid-column: span 12;">
+            <h2 class="panel-title">月度步数与睡眠时长</h2>
+            <div id="chart-health-monthly" class="chart"></div>
+          </div>
+          <div class="panel" style="grid-column: span 4;">
+            <h2 class="panel-title">体重变化</h2>
+            <div id="chart-health-weight-trend" class="chart compact"></div>
+          </div>
+          <div class="panel" style="grid-column: span 4;">
+            <h2 class="panel-title">身体年龄变化记录</h2>
+            <div id="chart-health-body-age-trend" class="chart compact"></div>
+          </div>
+          <div class="panel" style="grid-column: span 4;">
+            <h2 class="panel-title">静息心率变化</h2>
+            <div id="chart-health-resting-hr-trend" class="chart compact"></div>
+          </div>
+        </div>
+      </section>
+
+      <section x-show="tab === 'compare'" x-cloak>
+        <div class="section-grid">
+          <div class="panel" style="grid-column: span 12;">
+            <h2 class="panel-title">同比变化明细</h2>
+            <details id="compare-details" class="compare-details" open>
+              <summary>点击展开/收起同比明细</summary>
+              <div id="compare-rows"></div>
+            </details>
+          </div>
+          <div class="panel" style="grid-column: span 12;">
+            <h2 class="panel-title">月度里程对比（__YEAR__ vs __PREV_YEAR__）</h2>
+            <div id="chart-compare-monthly" class="chart"></div>
+          </div>
+          <div class="panel" style="grid-column: span 12;">
+            <h2 class="panel-title">Top 10 年度活动</h2>
+            <div id="table-top-activities" class="table-wrap"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="share-toast" class="share-toast" aria-live="polite"></div>
+
+  <script>
+    window.REPORT_DATA = __REPORT_DATA_JSON__;
+  </script>
+  <script>
+__REPORT_JS__
+  </script>
+</body>
+</html>

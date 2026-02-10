@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+
+# Python cache and tooling
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE/editor
+.idea/
+.vscode/
+
+# Project outputs and private Garmin data
+garmin_report_*/
+output/
+*.log
+
+# Secrets and certs
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
