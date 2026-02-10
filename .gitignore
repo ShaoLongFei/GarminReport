@@ -25,7 +25,9 @@ venv/
 
 # Project private data and generated assets
 garmin_report_*/
-output/
+output/*
+!output/screenshots/
+!output/screenshots/*.png
 *.log
 
 # Secrets and certificates

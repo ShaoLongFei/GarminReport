@@ -7,9 +7,10 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 fi
 
 STAGED_FILES=()
-while IFS= read -r -d '' file; do
+while IFS= read -r file; do
+  [ -n "$file" ] || continue
   STAGED_FILES+=("$file")
-done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+done < <(git diff --cached --name-only --diff-filter=ACMR)
 
 if [ "${#STAGED_FILES[@]}" -eq 0 ]; then
   echo "No staged files to scan."
