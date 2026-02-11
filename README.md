@@ -2,19 +2,26 @@
 
 Language: **English** | [中文](README.zh-CN.md)
 
-GarminReport is a stylish, privacy-first annual dashboard for Garmin data.
-It converts your activity and health records into a polished yearly report with:
+GarminReport turns your Garmin activity and health data into a polished annual report page.
+It is built for personal use with a privacy-first workflow and publication-ready visuals.
 
-- multi-section storytelling (Overview, Sports, Health, YoY)
-- rich charts and 3D/2D contribution-style visualizations
-- one-click print/PDF export
-- responsive layout for desktop and mobile
+## Live Demo
+
+- [Demo](https://shaolongfei.github.io/GarminReport/index.html)
+
+## Why GarminReport
+
+- Narrative annual dashboard (Overview, Sports, Health, Year-over-Year)
+- Rich chart set plus 3D/2D contribution-style visualizations
+- One-click print and PDF export
+- Responsive layout for desktop and mobile
+- Local-first data flow for better privacy control
 
 ## Screenshot
 
 Sports Analysis (Desktop):
 
-![Sports Analysis Desktop](output/screenshots/report-2025-sports-desktop.png)
+[![Sports Analysis Desktop](output/screenshots/report-2025-sports-desktop.png)](https://shaolongfei.github.io/GarminReport/index.html)
 
 ## Quick Start
 

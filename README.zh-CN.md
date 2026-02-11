@@ -3,7 +3,13 @@
 语言： [English](README.md) | **中文**
 
 GarminReport 是一个兼顾美观与隐私安全的 Garmin 年度报告项目。  
-它可以把活动与健康数据整理成结构化年度页面，支持：
+它可以把活动与健康数据整理成结构化年度页面。
+
+## 在线演示
+
+- [Demo](https://shaolongfei.github.io/GarminReport/index.html)
+
+## 项目亮点
 
 - 概览总览、运动分析、健康洞察、年度对比
 - 多种图表与 3D/2D 热力可视化
