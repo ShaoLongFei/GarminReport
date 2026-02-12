@@ -618,6 +618,27 @@ def build_analysis_report(year: int, data_dir: Path) -> tuple[dict[str, Any], Pa
     return payload, output
 
 
+def _has_daily_intensity_for_year(payload: dict[str, Any], year: int) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    daily = payload.get("daily_trends")
+    if not isinstance(daily, dict):
+        return False
+    intensity_by_date = daily.get("intensity_minutes_by_date")
+    if not isinstance(intensity_by_date, dict) or not intensity_by_date:
+        return False
+    year_prefix = f"{year}-"
+    return any(str(day_text).startswith(year_prefix) for day_text in intensity_by_date.keys())
+
+
+def load_previous_analysis_for_compare(previous_dir: Path, previous_year: int) -> tuple[dict[str, Any], Path]:
+    payload, source_path = load_analysis_report(data_dir=previous_dir)
+    if _has_daily_intensity_for_year(payload, previous_year):
+        return payload, source_path
+    rebuilt_payload, rebuilt_path = build_analysis_report(year=previous_year, data_dir=previous_dir)
+    return rebuilt_payload, rebuilt_path
+
+
 def build_plotly_charts_from_analysis(analysis_data: dict, year: int) -> dict:
     monthly = analysis_data.get("monthly_trends", {}) if isinstance(analysis_data, dict) else {}
     sports = analysis_data.get("sports", {}) if isinstance(analysis_data, dict) else {}
@@ -924,6 +945,51 @@ def _build_weekly_intensity_minutes_series(
     }
 
 
+def _build_monthly_intensity_totals(
+    year: int,
+    intensity_minutes_by_date: dict[str, float],
+) -> dict[str, float]:
+    totals: dict[str, float] = {f"{idx:02d}": 0.0 for idx in range(1, 13)}
+    for day_text, value in intensity_minutes_by_date.items():
+        try:
+            day = date.fromisoformat(str(day_text)[:10])
+        except Exception:
+            continue
+        if day.year != year:
+            continue
+        month_key = f"{day.month:02d}"
+        totals[month_key] += max(0.0, _as_float(value, 0.0))
+    return {k: round(v, 3) for k, v in totals.items()}
+
+
+def _build_monthly_intensity_compare_cards(
+    year: int,
+    current_by_date: dict[str, float],
+    previous_year: int,
+    previous_by_date: dict[str, float],
+) -> list[dict[str, Any]]:
+    current_monthly = _build_monthly_intensity_totals(year=year, intensity_minutes_by_date=current_by_date)
+    previous_monthly = _build_monthly_intensity_totals(year=previous_year, intensity_minutes_by_date=previous_by_date)
+
+    cards: list[dict[str, Any]] = []
+    for month in [f"{idx:02d}" for idx in range(1, 13)]:
+        current_val = _as_float(current_monthly.get(month), 0.0)
+        previous_val = _as_float(previous_monthly.get(month), 0.0)
+        delta_val = current_val - previous_val
+        pct_change = ((delta_val / previous_val) * 100.0) if previous_val > 0 else None
+        cards.append(
+            {
+                "month": month,
+                "month_label": f"{int(month)}月",
+                "current_minutes": round(current_val, 3),
+                "previous_minutes": round(previous_val, 3),
+                "delta_minutes": round(delta_val, 3),
+                "pct_change": round(pct_change, 3) if pct_change is not None else None,
+            }
+        )
+    return cards
+
+
 def _top_activity_rows(records: Any, include_type: bool = False) -> list[dict[str, Any]]:
     if not isinstance(records, list):
         return []
@@ -1089,10 +1155,19 @@ def _build_report_payload_from_analysis(
 
     previous_year = year - 1
     prev_monthly = previous_analysis_data.get("monthly_trends", {}) if isinstance(previous_analysis_data, dict) else {}
+    prev_daily_trends = previous_analysis_data.get("daily_trends", {}) if isinstance(previous_analysis_data, dict) else {}
     prev_meta = previous_analysis_data.get("meta", {}) if isinstance(previous_analysis_data, dict) else {}
     prev_year_meta = prev_meta.get("year")
     if isinstance(prev_year_meta, int):
         previous_year = prev_year_meta
+    raw_prev_daily_intensity = prev_daily_trends.get("intensity_minutes_by_date", {}) if isinstance(prev_daily_trends, dict) else {}
+    prev_daily_intensity_by_date = _normalize_daily_map(raw_prev_daily_intensity)
+    monthly_intensity_compare_cards = _build_monthly_intensity_compare_cards(
+        year=year,
+        current_by_date=daily_intensity_by_date,
+        previous_year=previous_year,
+        previous_by_date=prev_daily_intensity_by_date,
+    )
     _, prev_distance_m = _month_series(prev_monthly.get("distance_m_by_month") if isinstance(prev_monthly, dict) else {})
     _, prev_activity_count = _month_series(prev_monthly.get("activity_count_by_month") if isinstance(prev_monthly, dict) else {})
     prev_distance_km = [round(v / 1000.0, 3) for v in prev_distance_m]
@@ -1248,6 +1323,7 @@ def _build_report_payload_from_analysis(
             "body_age_by_date": daily_body_age_by_date,
         },
         "weekly_intensity_minutes": weekly_intensity_minutes,
+        "monthly_intensity_compare_cards": monthly_intensity_compare_cards,
         "previous_monthly_trends": {
             "distance_km": prev_distance_km,
             "activity_count": prev_activity_count,
@@ -1753,7 +1829,10 @@ def main():
         previous_dir = data_dir.parent / f"garmin_report_{previous_year}"
         if previous_dir.exists():
             try:
-                previous_analysis_data, previous_path = load_analysis_report(data_dir=previous_dir)
+                previous_analysis_data, previous_path = load_previous_analysis_for_compare(
+                    previous_dir=previous_dir,
+                    previous_year=previous_year,
+                )
                 print(f"✓ 已读取上一年分析数据: {previous_path}")
             except Exception as e:
                 print(f"⚠ 读取上一年分析数据失败，继续生成当前年度报告: {e}")

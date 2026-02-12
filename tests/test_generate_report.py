@@ -210,6 +210,9 @@ class GenerateReportAnalysisLoadTests(unittest.TestCase):
             self.assertIn("静息心率变化", html)
             self.assertNotIn("体重变化记录", html)
             self.assertNotIn("静息心率变化记录", html)
+            self.assertIn("月度强度活动时间同比卡片", html)
+            self.assertIn("compare-monthly-intensity-cards", html)
+            self.assertIn("renderCompareMonthlyIntensityCards", html)
             self.assertIn("data-iso-toggle-group", html)
             self.assertIn('data-iso-mode="2d"', html)
             self.assertIn('data-iso-mode="3d"', html)
@@ -249,6 +252,7 @@ class GenerateReportAnalysisLoadTests(unittest.TestCase):
             self.assertIn('"display_names_zh"', html)
             self.assertIn('"by_intensity_minutes"', html)
             self.assertIn('"weekly_intensity_minutes"', html)
+            self.assertIn('"monthly_intensity_compare_cards"', html)
 
     def test_comparison_rows_include_strength_and_badminton(self):
         analysis_data = {
@@ -282,6 +286,83 @@ class GenerateReportAnalysisLoadTests(unittest.TestCase):
         sections = {row.get("section") for row in payload.get("comparison_rows", []) if isinstance(row, dict)}
         self.assertIn("力量训练", sections)
         self.assertIn("羽毛球", sections)
+
+    def test_monthly_intensity_compare_cards_include_12_months_and_yoy_delta(self):
+        analysis_data = {
+            "activity_overview": {},
+            "health_overview": {},
+            "sports": {},
+            "monthly_trends": {},
+            "daily_trends": {
+                "intensity_minutes_by_date": {
+                    "2025-01-01": 40,
+                    "2025-01-10": 20,
+                    "2025-02-02": 10,
+                }
+            },
+        }
+        previous_analysis_data = {
+            "meta": {"year": 2024},
+            "daily_trends": {
+                "intensity_minutes_by_date": {
+                    "2024-01-03": 20,
+                    "2024-01-09": 10,
+                    "2024-02-01": 10,
+                }
+            },
+        }
+
+        payload = report_module._build_report_payload_from_analysis(
+            analysis_data=analysis_data,
+            year=2025,
+            previous_analysis_data=previous_analysis_data,
+        )
+        cards = payload.get("monthly_intensity_compare_cards", [])
+        self.assertEqual(len(cards), 12)
+
+        jan = cards[0]
+        self.assertEqual(jan.get("month"), "01")
+        self.assertEqual(jan.get("current_minutes"), 60.0)
+        self.assertEqual(jan.get("previous_minutes"), 30.0)
+        self.assertEqual(jan.get("delta_minutes"), 30.0)
+        self.assertEqual(jan.get("pct_change"), 100.0)
+
+        feb = cards[1]
+        self.assertEqual(feb.get("month"), "02")
+        self.assertEqual(feb.get("current_minutes"), 10.0)
+        self.assertEqual(feb.get("previous_minutes"), 10.0)
+        self.assertEqual(feb.get("delta_minutes"), 0.0)
+        self.assertEqual(feb.get("pct_change"), 0.0)
+
+    def test_load_previous_analysis_for_compare_rebuilds_when_daily_intensity_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            previous_dir = root / "garmin_report_2024"
+            previous_analyze = previous_dir / "analyze" / "analyze_report_data.json"
+            previous_analyze.parent.mkdir(parents=True, exist_ok=True)
+            previous_analyze.write_text(
+                json.dumps(
+                    {
+                        "meta": {"year": 2024},
+                        "monthly_trends": {"distance_m_by_month": {"01": 1000}},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            rebuilt_payload = {
+                "meta": {"year": 2024},
+                "daily_trends": {"intensity_minutes_by_date": {"2024-01-01": 12}},
+            }
+            rebuilt_path = previous_dir / "analyze" / "rebuilt.json"
+
+            with patch.object(report_module, "build_analysis_report", return_value=(rebuilt_payload, rebuilt_path)):
+                payload, source_path = report_module.load_previous_analysis_for_compare(
+                    previous_dir=previous_dir,
+                    previous_year=2024,
+                )
+
+            self.assertEqual(payload, rebuilt_payload)
+            self.assertEqual(source_path, rebuilt_path)
 
 
 if __name__ == "__main__":

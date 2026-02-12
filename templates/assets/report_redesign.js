@@ -133,6 +133,35 @@
         `;
       }
 
+      function renderCompareMonthlyIntensityCards(cards) {
+        if (!Array.isArray(cards) || cards.length === 0) {
+          return '<p class="muted-note">暂无强度活动同比数据</p>';
+        }
+        return cards.map((card) => {
+          const monthLabel = card.month_label || `${String(card.month || '').replace(/^0/, '')}月`;
+          const current = Number(card.current_minutes || 0);
+          const previous = Number(card.previous_minutes || 0);
+          const delta = Number(card.delta_minutes || 0);
+          const pctRaw = card.pct_change;
+          const hasPct = Number.isFinite(Number(pctRaw));
+          const deltaClass = delta > 0 ? 'pos' : (delta < 0 ? 'neg' : 'flat');
+          const deltaSign = delta > 0 ? '+' : (delta < 0 ? '-' : '');
+          const deltaMinutesText = `${deltaSign}${fmtNumber(Math.abs(delta), 1)} min`;
+          return `
+            <article class="compare-intensity-card ${deltaClass}">
+              <div class="compare-intensity-month">${monthLabel}</div>
+              <div class="compare-intensity-label">本月强度活动时间</div>
+              <div class="compare-intensity-current">${fmtNumber(current, 1)} min</div>
+              <div class="compare-intensity-delta">
+                <span>同比 ${deltaMinutesText}</span>
+                <span class="compare-intensity-pct ${hasPct ? deltaClass : 'na'}">${hasPct ? fmtPct(pctRaw) : '无可比数据'}</span>
+              </div>
+              <div class="compare-intensity-prev">上年同月 ${fmtNumber(previous, 1)} min</div>
+            </article>
+          `;
+        }).join('');
+      }
+
       function toIsoDateKey(dt) {
         const y = dt.getFullYear();
         const m = String(dt.getMonth() + 1).padStart(2, '0');
@@ -411,6 +440,9 @@
       const dailyTrends = report.daily_trends || {};
       const monthlyPrev = report.previous_monthly_trends || {};
       const compareRows = Array.isArray(report.comparison_rows) ? report.comparison_rows : [];
+      const compareIntensityCards = Array.isArray(report.monthly_intensity_compare_cards)
+        ? report.monthly_intensity_compare_cards
+        : [];
       const exportBtn = document.getElementById('btn-export-pdf');
       const reportShell = document.querySelector('.report-shell');
       const compareDetails = document.getElementById('compare-details');
@@ -592,6 +624,7 @@
           </div>
         `;
       }).join('') : '<p class="muted-note">分析文件中没有上一年同比字段。</p>');
+      setHtml('compare-monthly-intensity-cards', renderCompareMonthlyIntensityCards(compareIntensityCards));
 
       const common = getChartTheme();
       const labels = monthly.labels || [];
